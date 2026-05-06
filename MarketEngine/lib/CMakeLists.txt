@@ -1,4 +1,5 @@
 add_subdirectory(OrderBook)
+add_subdirectory(DataSource)
 
 add_library(market-engine INTERFACE)
 

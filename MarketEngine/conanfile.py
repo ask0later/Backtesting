@@ -8,6 +8,7 @@ class MarketEngineConan(ConanFile):
     generators = "CMakeDeps", "CMakeToolchain"
 
     def requirements(self):
+        self.requires("rapidcsv/8.84") # csv parser lib
         self.requires("gtest/1.17.0")
 
     def build_requirements(self):
