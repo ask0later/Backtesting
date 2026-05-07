@@ -31,3 +31,6 @@ add_test_executable(data-feed-test MarketDataFeedTests.cpp me-data-feed)
 
 # Engine
 add_test_executable(engine-test EngineTests.cpp me-data-feed me-order-book)
+
+# Replay
+add_test_executable(replay-test ReplayTests.cpp me-data-feed me-order-book)
