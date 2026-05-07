@@ -1,21 +1,30 @@
+function(add_test_executable TEST_NAME TEST_SOURCE TARGET_LIB)
+    add_executable(${TEST_NAME} ${TEST_SOURCE})
+    
+    target_link_libraries(${TEST_NAME} 
+        PRIVATE 
+            gtest::gtest
+            ${TARGET_LIB}
+    )
+    
+    target_include_directories(${TEST_NAME} 
+        PRIVATE 
+            ${GMOCK_INCLUDE_DIRS} 
+            ${GTEST_INCLUDE_DIRS}
+    )
+    
+    add_test(
+        NAME ${TEST_NAME}
+        COMMAND $<TARGET_FILE:${TEST_NAME}>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../..
+    )
+endfunction()
+
 # Order book
-add_executable(order-book-test OrderBookTests.cpp)
-
-target_link_libraries(order-book-test gtest::gtest me-order-book)
-target_include_directories(order-book-test PRIVATE ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS})
-
-add_test(
-    NAME order-book-test
-    COMMAND $<TARGET_FILE:order-book-test>
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+add_test_executable(order-book-test OrderBookTests.cpp me-order-book)
 
 # Csv Table
-add_executable(csv-table-test CsvTableTests.cpp)
+add_test_executable(csv-table-test CsvTableTests.cpp me-csv-table)
 
-target_link_libraries(csv-table-test gtest::gtest me-csv-table)
-target_include_directories(csv-table-test PRIVATE ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS})
-
-add_test(
-    NAME csv-table-test
-    COMMAND $<TARGET_FILE:csv-table-test>
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+# Data Feed
+add_test_executable(data-feed-test MarketDataFeedTests.cpp me-data-feed)
