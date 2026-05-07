@@ -8,8 +8,8 @@ namespace me {
 template <OrderBookConcept BookType> class BookUpdateStage final {
 public:
   void process(const Event &event, EngineContext<BookType> &ctx) {
-    std::visit([&](auto &bookEvent) { ctx.book.accept(bookEvent); },
-               event.event);
+    EventType tmpEvent = event.event;
+    std::visit([&](auto &bookEvent) { ctx.book.accept(bookEvent); }, tmpEvent);
   }
 };
 
