@@ -1,10 +1,10 @@
-function(add_test_executable TEST_NAME TEST_SOURCE TARGET_LIB)
+function(add_test_executable TEST_NAME TEST_SOURCE)
     add_executable(${TEST_NAME} ${TEST_SOURCE})
     
     target_link_libraries(${TEST_NAME} 
         PRIVATE 
             gtest::gtest
-            ${TARGET_LIB}
+            ${ARGN}
     )
     
     target_include_directories(${TEST_NAME} 
@@ -28,3 +28,6 @@ add_test_executable(csv-table-test CsvTableTests.cpp me-csv-table)
 
 # Data Feed
 add_test_executable(data-feed-test MarketDataFeedTests.cpp me-data-feed)
+
+# Engine
+add_test_executable(engine-test EngineTests.cpp me-data-feed me-order-book)
