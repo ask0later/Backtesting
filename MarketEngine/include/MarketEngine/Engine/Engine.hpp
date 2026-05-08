@@ -36,6 +36,8 @@ public:
     }
   }
 
+  const Context &context() const { return ctx_; }
+
 private:
   FeedType feed_;
   PipelineType pipeline_;
