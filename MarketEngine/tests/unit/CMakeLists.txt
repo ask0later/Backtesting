@@ -34,3 +34,6 @@ add_test_executable(engine-test EngineTests.cpp me-data-feed me-order-book)
 
 # Replay
 add_test_executable(replay-test ReplayTests.cpp me-data-feed me-order-book)
+
+# Strategy
+add_test_executable(strategy-test StrategyTests.cpp me-data-feed me-order-book)
