@@ -2,9 +2,9 @@
 
 #include "MarketEngine/Common/Order.hpp"
 
-#include <variant>
-
 namespace me {
+
+// Participant-generated requests addressed to the book model.
 
 struct AddOrderRequest final {
   Order order;
@@ -17,9 +17,13 @@ struct CancelOrderRequest final {
 struct ModifyOrderRequest final {
   OrderId id{};
   QtyT newQty{};
+  PriceT newPrice{};
 };
 
-using OrderRequest =
-    std::variant<AddOrderRequest, CancelOrderRequest, ModifyOrderRequest>;
+struct MarketOrderRequest final {
+  OrderId id{};
+  Side side{};
+  QtyT qty{};
+};
 
 } // namespace me

@@ -13,13 +13,12 @@ public:
   explicit StrategyStage(StrategyAdapter<BookType> &strategy)
       : strategy_(strategy) {}
 
-  void process(const Event &event, EngineContext<BookType> &ctx) {
+  void process(const MarketEvent &event, EngineContext<BookType> &ctx) {
     StrategyContext<BookType> strategyCtx(ctx.book);
-
     strategy_.onMarketEvent(event, strategyCtx);
 
-    for (auto &request : strategyCtx.drainRequests()) {
-      ctx.orderIngress.push(std::move(request));
+    for (auto &modelEvent : strategyCtx.drainRequests()) {
+      ctx.pendingModelEvents.push(std::move(modelEvent));
     }
   }
 

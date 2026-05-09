@@ -3,16 +3,18 @@
 #include "MarketEngine/Engine/Engine.hpp"
 #include "MarketEngine/Engine/EngineContext.hpp"
 #include "MarketEngine/Engine/EventPipeline.hpp"
+#include "MarketEngine/MarketDataFeed/EventSource.hpp"
 
 namespace {
 
-void applyToSparseBook(me::SparseOrderBook &book, const me::Event &event) {
-  auto &mutableEvent = const_cast<me::EventType &>(event.event);
+void applyToSparseBook(me::SparseOrderBook &book,
+                       const me::MarketEvent &event) {
+  auto &mutableEvent = const_cast<me::MarketEventType &>(event.event);
   std::visit([&book](auto &visitor) { book.accept(visitor); }, mutableEvent);
 }
 
-void applyToFullBook(me::FullOrderBook &book, const me::Event &event) {
-  auto &mutableEvent = const_cast<me::EventType &>(event.event);
+void applyToFullBook(me::FullOrderBook &book, const me::MarketEvent &event) {
+  auto &mutableEvent = const_cast<me::MarketEventType &>(event.event);
   std::visit([&book](auto &visitor) { book.accept(visitor); }, mutableEvent);
 }
 
@@ -21,22 +23,22 @@ using FullCtx = me::EngineContext<me::FullOrderBook>;
 
 struct CountStage {
   int &count;
-  void process(const me::Event &, SparseCtx &) { ++count; }
-  void process(const me::Event &, FullCtx &) { ++count; }
+  void process(const me::MarketEvent &, SparseCtx &) { ++count; }
+  void process(const me::MarketEvent &, FullCtx &) { ++count; }
 };
 
 struct TimestampStage {
   me::TimestampNsT &ts;
-  void process(const me::Event &, SparseCtx &ctx) { ts = ctx.now; }
-  void process(const me::Event &, FullCtx &ctx) { ts = ctx.now; }
+  void process(const me::MarketEvent &, SparseCtx &ctx) { ts = ctx.now; }
+  void process(const me::MarketEvent &, FullCtx &ctx) { ts = ctx.now; }
 };
 
 struct CurrentEventStage {
   me::TimestampNsT &timestamp;
-  void process(const me::Event &event, SparseCtx &) {
+  void process(const me::MarketEvent &event, SparseCtx &) {
     timestamp = event.timestamp;
   }
-  void process(const me::Event &event, FullCtx &) {
+  void process(const me::MarketEvent &event, FullCtx &) {
     timestamp = event.timestamp;
   }
 };
@@ -44,23 +46,27 @@ struct CurrentEventStage {
 struct TraceStage {
   std::string &trace;
   std::string tag;
-  void process(const me::Event &, SparseCtx &) { trace += tag; }
-  void process(const me::Event &, FullCtx &) { trace += tag; }
+  void process(const me::MarketEvent &, SparseCtx &) { trace += tag; }
+  void process(const me::MarketEvent &, FullCtx &) { trace += tag; }
 };
 
 struct ApplyToSparseBookStage {
   me::SparseOrderBook &book;
-  void process(const me::Event &e, SparseCtx &) { applyToSparseBook(book, e); }
+  void process(const me::MarketEvent &e, SparseCtx &) {
+    applyToSparseBook(book, e);
+  }
 };
 
 struct ApplyToFullBookStage {
   me::FullOrderBook &book;
-  void process(const me::Event &e, FullCtx &) { applyToFullBook(book, e); }
+  void process(const me::MarketEvent &e, FullCtx &) {
+    applyToFullBook(book, e);
+  }
 };
 
-struct VectorFeed : me::EventSource<VectorFeed> {
-  explicit VectorFeed(std::vector<me::Event> events)
-      : EventSource(std::move(events)) {}
+struct VectorFeed : me::MarketEventSource<VectorFeed> {
+  explicit VectorFeed(std::vector<me::MarketEvent> events)
+      : MarketEventSource(std::move(events)) {}
 };
 
 } // namespace
@@ -102,7 +108,7 @@ TEST(EngineTest, ContextTimestampUpdated) {
 TEST(EngineTest, CurrentEventPointerSet) {
   me::SparseOrderBook book;
   SparseCtx ctx{.book = book};
-  me::Event ev{10, me::AddOrderEvent{}};
+  me::MarketEvent ev{10, me::AddOrderEvent{}};
   VectorFeed feed({ev});
   me::TimestampNsT timestamp = 0;
   me::EventPipeline<SparseCtx, CurrentEventStage> pipeline(
@@ -129,7 +135,7 @@ TEST(EngineTest, AddOrderUpdatesBook) {
   SparseCtx ctx{.book = book};
 
   me::Order buy{1, 100.0, 30.0, me::Side::Buy};
-  me::Event ev{1000, me::AddOrderEvent{buy}};
+  me::MarketEvent ev{1000, me::AddOrderEvent{buy}};
   VectorFeed feed({ev});
 
   me::EventPipeline<SparseCtx, ApplyToSparseBookStage> pipeline(
@@ -216,8 +222,8 @@ TEST(FullOrderBookTest, CancelOrder) {
   FullCtx ctx{.book = book};
 
   me::Order buy{1, 100.0, 50.0, me::Side::Buy};
-  me::Event addEv{1, me::AddOrderEvent{buy}};
-  me::Event cancelEv{2, me::CancelOrderEvent{1}};
+  me::MarketEvent addEv{1, me::AddOrderEvent{buy}};
+  me::MarketEvent cancelEv{2, me::CancelOrderEvent{1}};
 
   VectorFeed feed({addEv, cancelEv});
   me::EventPipeline<FullCtx, ApplyToFullBookStage> pipeline(
@@ -234,8 +240,8 @@ TEST(FullOrderBookTest, ModifyOrderChangesQty) {
   FullCtx ctx{.book = book};
 
   me::Order buy{1, 100.0, 50.0, me::Side::Buy};
-  me::Event addEv{1, me::AddOrderEvent{buy}};
-  me::Event modEv{2, me::ModifyOrderEvent{1, 77.0}};
+  me::MarketEvent addEv{1, me::AddOrderEvent{buy}};
+  me::MarketEvent modEv{2, me::ModifyOrderEvent{1, 77.0}};
 
   VectorFeed feed({addEv, modEv});
   me::EventPipeline<FullCtx, ApplyToFullBookStage> pipeline(

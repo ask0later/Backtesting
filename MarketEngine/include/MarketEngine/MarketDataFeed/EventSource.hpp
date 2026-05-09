@@ -1,6 +1,6 @@
 #pragma once
-#include "MarketEngine/Common/Order.hpp"
-#include "MarketEngine/OrderBook/BookEvent.hpp"
+
+#include "MarketEngine/MarketDataFeed/MarketEvent.hpp"
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -10,16 +10,7 @@
 
 namespace me {
 
-using EventType =
-    std::variant<AddOrderEvent, CancelOrderEvent, ModifyOrderEvent,
-                 ExecuteMarketEvent, SnapshotUpdateEvent>;
-
-struct Event final {
-  TimestampNsT timestamp{};
-  EventType event;
-};
-
-template <typename Book> void apply(Book &&bk, EventType &event) {
+template <typename Book> void apply(Book &&bk, MarketEventType &event) {
   std::visit(
       [&](auto &&visitor) {
         std::forward<Book>(bk).accept(std::forward<decltype(visitor)>(visitor));
@@ -27,10 +18,10 @@ template <typename Book> void apply(Book &&bk, EventType &event) {
       event);
 }
 
-template <typename ConcreteEventSource> class EventSource {
+template <typename ConcreteEventSource> class MarketEventSource {
 public:
   // O(1) without redudant computations (parsing and so on)
-  std::optional<Event> nextEvent() {
+  std::optional<MarketEvent> nextEvent() {
     return (cursor_ < events_.size()) ? std::optional(events_[cursor_++])
                                       : std::nullopt;
   }
@@ -40,26 +31,26 @@ public:
   void reset() { cursor_ = 0; }
 
 protected:
-  explicit EventSource(std::vector<Event> &&events)
+  explicit MarketEventSource(std::vector<MarketEvent> &&events)
       : events_(std::move(events)), cursor_(0) {}
 
 private:
-  std::vector<Event> events_;
+  std::vector<MarketEvent> events_;
   size_t cursor_ = 0;
 };
 
 class LobSnapshotEventSource final
-    : public EventSource<LobSnapshotEventSource> {
+    : public MarketEventSource<LobSnapshotEventSource> {
 public:
   explicit LobSnapshotEventSource(const std::filesystem::path &lobCsvPath);
 };
 
-class TradesEventSource final : public EventSource<TradesEventSource> {
+class TradesEventSource final : public MarketEventSource<TradesEventSource> {
 public:
   explicit TradesEventSource(const std::filesystem::path &tradesCsvPath);
 };
 
-class MixedEventSource final : public EventSource<MixedEventSource> {
+class MixedEventSource final : public MarketEventSource<MixedEventSource> {
 public:
   MixedEventSource(const std::filesystem::path &lobCsvPath,
                    const std::filesystem::path &tradesCsvPath);

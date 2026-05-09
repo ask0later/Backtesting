@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MarketEngine/MarketDataFeed/EventSource.hpp"
+#include "MarketEngine/MarketDataFeed/MarketEvent.hpp"
 #include "MarketEngine/Strategy/StrategyContext.hpp"
 
 namespace me {
@@ -9,7 +9,7 @@ template <OrderBookConcept BookType> class StrategyAdapter {
 public:
   virtual ~StrategyAdapter() = default;
 
-  virtual void onMarketEvent(const Event &event,
+  virtual void onMarketEvent(const MarketEvent &event,
                              StrategyContext<BookType> &ctx) = 0;
 };
 

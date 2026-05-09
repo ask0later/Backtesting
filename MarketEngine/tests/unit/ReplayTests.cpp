@@ -22,7 +22,7 @@ template <typename Ctx> struct TypeMonitorStage {
   size_t &snapshotCount;
   size_t &tradeCount;
 
-  void process(const me::Event &e, Ctx &ctx) {
+  void process(const me::MarketEvent &e, Ctx &ctx) {
     ++total;
     lastTs = ctx.now;
     std::visit(
@@ -42,7 +42,7 @@ template <typename Ctx> struct TypeMonitorStage {
 
 template <typename Ctx> struct OrderCheckStage {
   me::TimestampNsT &prev;
-  void process(const me::Event &e, Ctx &) {
+  void process(const me::MarketEvent &e, Ctx &) {
     EXPECT_GE(e.timestamp, prev);
     prev = e.timestamp;
   }

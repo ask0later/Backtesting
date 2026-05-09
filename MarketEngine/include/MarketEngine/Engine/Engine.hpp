@@ -9,14 +9,14 @@ namespace me {
 
 template <typename FeedType>
 concept EventFeedConcept = requires(FeedType feed) {
-  { feed.nextEvent() } -> std::same_as<std::optional<Event>>;
+  { feed.nextEvent() } -> std::same_as<std::optional<MarketEvent>>;
 };
 
 template <typename PipelineType, typename ContextType>
-concept EventPipelineConcept =
-    requires(PipelineType pipeline, const Event &event, ContextType &ctx) {
-      { pipeline.process(event, ctx) } -> std::same_as<void>;
-    };
+concept EventPipelineConcept = requires(
+    PipelineType pipeline, const MarketEvent &event, ContextType &ctx) {
+  { pipeline.process(event, ctx) } -> std::same_as<void>;
+};
 
 template <EventFeedConcept FeedType, typename PipelineType,
           OrderBookConcept BookType>

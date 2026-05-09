@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MarketEngine/Common/OrderRequest.hpp"
+#include "MarketEngine/Strategy/ModelEvent.hpp"
 
 #include <utility>
 #include <vector>
@@ -13,13 +13,13 @@ public:
 
   const BookType &book() const { return book_; }
 
-  void submitOrder(OrderRequest &&request) {
+  void submitOrder(ModelEvent &&request) {
     requests_.push_back(std::move(request));
   }
 
-  const std::vector<OrderRequest> &requests() const { return requests_; }
+  const std::vector<ModelEvent> &requests() const { return requests_; }
 
-  std::vector<OrderRequest> drainRequests() {
+  std::vector<ModelEvent> drainRequests() {
     auto out = std::move(requests_);
     requests_.clear();
     return out;
@@ -27,7 +27,7 @@ public:
 
 private:
   const BookType &book_;
-  std::vector<OrderRequest> requests_;
+  std::vector<ModelEvent> requests_;
 };
 
 } // namespace me

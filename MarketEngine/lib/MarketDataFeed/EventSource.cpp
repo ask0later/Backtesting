@@ -123,7 +123,7 @@ buildAsksFromLevelMap(const std::unordered_map<int, LobLevelCols> &byLevel,
   return asks;
 }
 
-std::vector<Event> buildLobEvents(const CsvTable &table) {
+std::vector<MarketEvent> buildLobEvents(const CsvTable &table) {
   std::unordered_map<int, LobLevelCols> byLevel;
   byLevel.reserve(32);
   for (int c = 0; c < table.numColumns(); ++c)
@@ -134,10 +134,10 @@ std::vector<Event> buildLobEvents(const CsvTable &table) {
     throw std::runtime_error("LOB CSV: column 'local_timestamp' not found");
 
   const int64_t nrows = table.numRows();
-  std::vector<Event> out;
+  std::vector<MarketEvent> out;
   out.reserve(static_cast<std::size_t>(std::max<int64_t>(nrows, 0)));
   for (int64_t r = 0; r < nrows; ++r) {
-    Event ev{};
+    MarketEvent ev{};
     ev.timestamp = table.timestampAt(colTs, r);
     SnapshotUpdateEvent sue;
     sue.newBids = buildBidsFromLevelMap(byLevel, table, r);
@@ -148,7 +148,7 @@ std::vector<Event> buildLobEvents(const CsvTable &table) {
   return out;
 }
 
-std::vector<Event> buildTradeEvents(const CsvTable &table) {
+std::vector<MarketEvent> buildTradeEvents(const CsvTable &table) {
   const int colTs = table.fieldIndex("local_timestamp");
   const int colSide = table.fieldIndex("side");
   const int colQty = table.fieldIndex("amount");
@@ -156,10 +156,10 @@ std::vector<Event> buildTradeEvents(const CsvTable &table) {
     throw std::runtime_error("trades CSV: missing required columns");
 
   const int64_t nrows = table.numRows();
-  std::vector<Event> out;
+  std::vector<MarketEvent> out;
   out.reserve(std::max<int64_t>(nrows, 0));
   for (int64_t r = 0; r < nrows; ++r) {
-    Event ev{};
+    MarketEvent ev{};
     ev.timestamp = table.timestampAt(colTs, r);
     const bool buyer = parseSideTrade(table.utf8At(colSide, r));
 
@@ -172,11 +172,11 @@ std::vector<Event> buildTradeEvents(const CsvTable &table) {
   return out;
 }
 
-std::vector<Event> mergeLobThenTradesByTimestamp(const CsvTable &lob,
-                                                 const CsvTable &trades) {
-  std::vector<Event> a = buildLobEvents(lob);
-  std::vector<Event> b = buildTradeEvents(trades);
-  std::vector<Event> out;
+std::vector<MarketEvent> mergeLobThenTradesByTimestamp(const CsvTable &lob,
+                                                       const CsvTable &trades) {
+  std::vector<MarketEvent> a = buildLobEvents(lob);
+  std::vector<MarketEvent> b = buildTradeEvents(trades);
+  std::vector<MarketEvent> out;
   out.reserve(a.size() + b.size());
   auto ai = a.begin();
   auto bi = b.begin();
@@ -195,14 +195,15 @@ std::vector<Event> mergeLobThenTradesByTimestamp(const CsvTable &lob,
 
 LobSnapshotEventSource::LobSnapshotEventSource(
     const std::filesystem::path &lobCsvPath)
-    : EventSource(buildLobEvents(loadCsv(lobCsvPath))) {}
+    : MarketEventSource(buildLobEvents(loadCsv(lobCsvPath))) {}
 
 TradesEventSource::TradesEventSource(const std::filesystem::path &tradesCsvPath)
-    : EventSource(buildTradeEvents(loadCsv(tradesCsvPath))) {}
+    : MarketEventSource(buildTradeEvents(loadCsv(tradesCsvPath))) {}
 
 MixedEventSource::MixedEventSource(const std::filesystem::path &lobCsvPath,
                                    const std::filesystem::path &tradesCsvPath)
-    : EventSource(mergeLobThenTradesByTimestamp(loadCsv(lobCsvPath),
-                                                loadCsv(tradesCsvPath))) {}
+    : MarketEventSource(mergeLobThenTradesByTimestamp(loadCsv(lobCsvPath),
+                                                      loadCsv(tradesCsvPath))) {
+}
 
 } // namespace me

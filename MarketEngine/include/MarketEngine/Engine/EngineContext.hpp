@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MarketEngine/Common/OrderRequest.hpp"
 #include "MarketEngine/Common/Types.hpp"
-#include "MarketEngine/MarketDataFeed/EventSource.hpp"
+#include "MarketEngine/MarketDataFeed/MarketEvent.hpp"
+#include "MarketEngine/Strategy/ModelEvent.hpp"
 
 #include <concepts>
 #include <queue>
@@ -31,7 +31,7 @@ concept OrderBookConcept = requires(BookType book) {
 
 template <OrderBookConcept BookType> struct EngineContext final {
   TimestampNsT now{};
-  std::queue<OrderRequest> orderIngress;
+  ModelEventBuffer pendingModelEvents;
   BookType &book;
 };
 
