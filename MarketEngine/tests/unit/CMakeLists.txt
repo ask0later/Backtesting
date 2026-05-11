@@ -40,3 +40,6 @@ add_test_executable(strategy-test StrategyTests.cpp me-data-feed me-order-book)
 
 # Matching Engine
 add_test_executable(matching-engine-test MatchingTests.cpp me-data-feed me-order-book)
+
+# Metrics / portfolio
+add_test_executable(metrics-test PortfolioMetricsTests.cpp me-metrics me-order-book)
