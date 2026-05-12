@@ -6,10 +6,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(rapidcsv REQUIRED)
-
 add_subdirectory(lib)
 
-message(STATUS "Testing configuration")
-find_package(GTest CONFIG REQUIRED)
-enable_testing()
-add_subdirectory(tests)
+option(MARKET_ENGINE_BUILD_TESTS "Build MarketEngine tests" ON)
+if (MARKET_ENGINE_BUILD_TESTS)
+  message(STATUS "Testing configuration")
+  find_package(GTest CONFIG REQUIRED)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
